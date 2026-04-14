@@ -13,8 +13,9 @@ Payment rule
 ------------
 For each agent i:
 
-  p_i(theta) = (1/(n-1)) * sum_{j != i} E_{theta_{-j}}[sum_{k != j} v_k(a*(theta_k, theta_{-k}), theta_k)]
-             - E_{theta_{-i}}[sum_{j != i} v_j(a*(theta_i, theta_{-i}), theta_j)]
+  p_i(theta) = (1/(n-1)) * sum_{j != i}
+    E_{theta_{-j}}[sum_{k != j} v_k(a*(theta_k, theta_{-k}), theta_k)]
+    - E_{theta_{-i}}[sum_{j != i} v_j(a*(theta_i, theta_{-i}), theta_j)]
 
 In the simplified form with independent types:
 
@@ -29,12 +30,13 @@ For practical implementation, we use the direct approach:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 
-from src.core.vcg import MechanismResult, VCGMechanism
+from src.core.vcg import VCGMechanism
 
 
 @dataclass
@@ -42,8 +44,8 @@ class AGVResult:
     """Result of AGV mechanism."""
 
     allocation: Any
-    payments: Dict[int, float]
-    utilities: Dict[int, float]
+    payments: dict[int, float]
+    utilities: dict[int, float]
     social_welfare: float
     budget_surplus: float
     expected_budget_surplus: float  # should be ~0
@@ -71,9 +73,9 @@ class AGVMechanism:
     def __init__(
         self,
         num_agents: int,
-        allocations: List[Any],
+        allocations: list[Any],
         valuation_fn: Callable,
-        type_distributions: Dict[int, List[Tuple[Any, float]]],
+        type_distributions: dict[int, list[tuple[Any, float]]],
     ):
         self.num_agents = num_agents
         self.allocations = allocations
@@ -90,13 +92,13 @@ class AGVMechanism:
         # Precompute expected externalities for budget balancing
         self._expected_externalities = self._compute_expected_externalities()
 
-    def _compute_expected_externalities(self) -> Dict[int, float]:
+    def _compute_expected_externalities(self) -> dict[int, float]:
         """Compute E_{theta_{-i}}[sum_{j!=i} v_j(a*(theta), theta_j)] for
         each agent i, averaging over the prior on others' types.
 
         This is used to construct the redistribution terms.
         """
-        expected_ext: Dict[int, float] = {}
+        expected_ext: dict[int, float] = {}
 
         for i in range(self.num_agents):
             # We need to compute the expected Clarke pivot payment for agent i
@@ -118,7 +120,7 @@ class AGVMechanism:
             for combo in others_combos:
                 # combo is a tuple of (type, prob) pairs for each other agent
                 prob = 1.0
-                type_profile_others: Dict[int, Any] = {}
+                type_profile_others: dict[int, Any] = {}
                 for idx, j in enumerate(others):
                     type_val, type_prob = combo[idx]
                     type_profile_others[j] = type_val
@@ -165,7 +167,7 @@ class AGVMechanism:
 
         return expected_ext
 
-    def _compute_redistribution(self) -> Dict[int, float]:
+    def _compute_redistribution(self) -> dict[int, float]:
         """Compute redistribution amounts that achieve expected budget balance.
 
         We redistribute the expected surplus equally.  Each agent receives
@@ -190,7 +192,7 @@ class AGVMechanism:
             )
         return redistribution
 
-    def solve(self, type_reports: Dict[int, Any]) -> AGVResult:
+    def solve(self, type_reports: dict[int, Any]) -> AGVResult:
         """Run the AGV mechanism on reported types.
 
         Parameters
@@ -209,8 +211,8 @@ class AGVMechanism:
         redistribution = self._compute_redistribution()
 
         # AGV payments = VCG payments - redistribution
-        payments: Dict[int, float] = {}
-        utilities: Dict[int, float] = {}
+        payments: dict[int, float] = {}
+        utilities: dict[int, float] = {}
 
         for i in range(self.num_agents):
             payments[i] = vcg_result.payments[i] - redistribution[i]
@@ -238,10 +240,10 @@ class AGVMechanism:
         self,
         agent: int,
         true_type: Any,
-        type_space: List[Any],
+        type_space: list[Any],
         num_samples: int = 1000,
         seed: int = 42,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Verify Bayesian incentive compatibility for an agent.
 
         Checks that truthful reporting maximises expected utility,
@@ -259,7 +261,7 @@ class AGVMechanism:
 
             for _ in range(num_samples):
                 # Sample others' types from prior
-                type_profile: Dict[int, Any] = {agent: reported_type}
+                type_profile: dict[int, Any] = {agent: reported_type}
                 for j in others:
                     types_probs = self.type_distributions[j]
                     types, probs = zip(*types_probs)

@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-import itertools
-
-import pytest
 import numpy as np
 
 from src.core.auctions import MultiUnitAuction, VickreyAuction
 from src.core.manipulation import ManipulationDetector
-from src.core.vcg import VCGMechanism
 
 
 class TestTruthfulnessVickrey:

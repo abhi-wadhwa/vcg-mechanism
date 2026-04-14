@@ -22,9 +22,9 @@ or composed with custom allocation rules.
 
 from __future__ import annotations
 
-import itertools
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -34,8 +34,8 @@ class MechanismResult:
     """Container for VCG mechanism outputs."""
 
     allocation: Any
-    payments: Dict[int, float]
-    utilities: Dict[int, float]
+    payments: dict[int, float]
+    utilities: dict[int, float]
     social_welfare: float
     budget_surplus: float  # sum of payments (>= 0 for Clarke pivot)
 
@@ -76,10 +76,10 @@ class VCGMechanism:
     def __init__(
         self,
         num_agents: int,
-        allocations: Optional[List[Any]] = None,
-        valuation_fn: Optional[Callable] = None,
-        allocation_rule: Optional[Callable] = None,
-        h_functions: Optional[Dict[int, Callable]] = None,
+        allocations: list[Any] | None = None,
+        valuation_fn: Callable | None = None,
+        allocation_rule: Callable | None = None,
+        h_functions: dict[int, Callable] | None = None,
     ):
         self.num_agents = num_agents
         self.allocations = allocations
@@ -91,7 +91,7 @@ class VCGMechanism:
     # Core algorithm
     # ------------------------------------------------------------------
 
-    def solve(self, type_reports: Dict[int, Any]) -> MechanismResult:
+    def solve(self, type_reports: dict[int, Any]) -> MechanismResult:
         """Run the mechanism on reported types.
 
         Parameters
@@ -103,14 +103,17 @@ class VCGMechanism:
         -------
         MechanismResult
         """
+        if self.valuation_fn is None:
+            raise ValueError("valuation_fn must be provided to solve.")
+
         agents = list(range(self.num_agents))
 
         # Step 1: welfare-maximising allocation
         allocation, welfare = self._find_optimal_allocation(agents, type_reports)
 
         # Step 2: VCG payments
-        payments: Dict[int, float] = {}
-        utilities: Dict[int, float] = {}
+        payments: dict[int, float] = {}
+        utilities: dict[int, float] = {}
 
         for i in agents:
             others = [j for j in agents if j != i]
@@ -150,17 +153,20 @@ class VCGMechanism:
 
     def _find_optimal_allocation(
         self,
-        agents: List[int],
-        type_reports: Dict[int, Any],
-    ) -> Tuple[Any, float]:
+        agents: list[int],
+        type_reports: dict[int, Any],
+    ) -> tuple[Any, float]:
         """Find the allocation maximising total welfare."""
         if self.allocation_rule is not None:
-            return self.allocation_rule(agents, type_reports)
+            result = self.allocation_rule(agents, type_reports)
+            return result[0], float(result[1])
 
         if self.allocations is None:
             raise ValueError(
                 "Either 'allocations' or 'allocation_rule' must be provided."
             )
+
+        assert self.valuation_fn is not None
 
         best_alloc = None
         best_welfare = -np.inf
@@ -173,16 +179,18 @@ class VCGMechanism:
                 best_welfare = welfare
                 best_alloc = alloc
 
-        return best_alloc, best_welfare
+        return best_alloc, float(best_welfare)
 
     def _find_optimal_allocation_without(
         self,
-        agents: List[int],
-        type_reports: Dict[int, Any],
-    ) -> Tuple[Any, float]:
+        agents: list[int],
+        type_reports: dict[int, Any],
+    ) -> tuple[Any, float]:
         """Find the allocation maximising welfare for a subset of agents."""
         if self.allocations is None:
             raise ValueError("Brute-force search requires 'allocations' list.")
+
+        assert self.valuation_fn is not None
 
         best_alloc = None
         best_welfare = -np.inf
@@ -195,7 +203,7 @@ class VCGMechanism:
                 best_welfare = welfare
                 best_alloc = alloc
 
-        return best_alloc, best_welfare
+        return best_alloc, float(best_welfare)
 
     # ------------------------------------------------------------------
     # Clarke pivot
@@ -204,8 +212,8 @@ class VCGMechanism:
     def _clarke_pivot_h(
         self,
         i: int,
-        others: List[int],
-        type_reports: Dict[int, Any],
+        others: list[int],
+        type_reports: dict[int, Any],
     ) -> float:
         """Compute Clarke pivot h_i = max_a sum_{j!=i} v_j(a, theta_j)."""
         _, best_welfare_without_i = self._find_optimal_allocation_without(
@@ -219,10 +227,10 @@ class VCGMechanism:
 
     def verify_truthfulness(
         self,
-        true_types: Dict[int, Any],
-        type_space: Optional[Dict[int, List[Any]]] = None,
-        agent: Optional[int] = None,
-    ) -> Dict[int, bool]:
+        true_types: dict[int, Any],
+        type_space: dict[int, list[Any]] | None = None,
+        agent: int | None = None,
+    ) -> dict[int, bool]:
         """Verify that truthful reporting is a dominant strategy.
 
         For each agent (or a specific ``agent``), iterate over alternative
@@ -242,10 +250,12 @@ class VCGMechanism:
         -------
         dict mapping agent index to bool (True = truthful is dominant).
         """
+        assert self.valuation_fn is not None
+
         agents_to_check = [agent] if agent is not None else list(range(self.num_agents))
 
         truthful_result = self.solve(true_types)
-        results: Dict[int, bool] = {}
+        results: dict[int, bool] = {}
 
         for i in agents_to_check:
             if type_space is None or i not in type_space:

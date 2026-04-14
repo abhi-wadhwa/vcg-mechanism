@@ -5,17 +5,14 @@ Run with:  streamlit run src/viz/app.py
 
 from __future__ import annotations
 
-import itertools
-from typing import Any, Dict, List
+from typing import Any
 
 import numpy as np
 import streamlit as st
 
 from src.core.auctions import MultiUnitAuction, VickreyAuction
-from src.core.public_goods import PublicProjectMechanism
-from src.core.facility import FacilityLocationMechanism
-from src.core.vcg import VCGMechanism
 from src.core.manipulation import ManipulationDetector
+from src.core.public_goods import PublicProjectMechanism
 
 
 def main() -> None:
@@ -82,7 +79,7 @@ def _mechanism_simulator() -> None:
 def _sim_vickrey() -> None:
     n = st.slider("Number of bidders", 2, 10, 3, key="sim_vickrey_n")
     st.markdown("Enter bids:")
-    bids: Dict[int, float] = {}
+    bids: dict[int, float] = {}
     cols = st.columns(min(n, 5))
     for i in range(n):
         col = cols[i % len(cols)]
@@ -100,7 +97,8 @@ def _sim_vickrey() -> None:
             st.metric("Winner", f"Bidder {result.allocation}")
             st.metric("Winning bid", f"{bids[result.allocation]:.2f}")
         with col2:
-            st.metric("Payment (2nd price)", f"{result.payments[result.allocation]:.2f}")
+            winner_payment = result.payments[result.allocation]
+            st.metric("Payment (2nd price)", f"{winner_payment:.2f}")
             st.metric("Social welfare", f"{result.social_welfare:.2f}")
 
         st.subheader("All payments and utilities")
@@ -118,7 +116,7 @@ def _sim_multi_unit() -> None:
     k = st.slider("Number of items", 1, n - 1, 2, key="sim_multi_k")
 
     st.markdown("Enter bids:")
-    bids: Dict[int, float] = {}
+    bids: dict[int, float] = {}
     cols = st.columns(min(n, 5))
     for i in range(n):
         col = cols[i % len(cols)]
@@ -152,7 +150,7 @@ def _sim_public_project() -> None:
     cost = st.number_input("Project cost", value=50.0, key="sim_pub_cost")
 
     st.markdown("Enter valuations for the project:")
-    vals: Dict[int, float] = {}
+    vals: dict[int, float] = {}
     cols = st.columns(min(n, 5))
     for i in range(n):
         col = cols[i % len(cols)]
@@ -211,7 +209,7 @@ def _truthfulness_proof() -> None:
         n = st.slider("Number of bidders", 2, 6, 3, key="truth_vickrey_n")
 
         st.markdown("**True valuations:**")
-        true_vals: Dict[int, float] = {}
+        true_vals: dict[int, float] = {}
         cols = st.columns(min(n, 5))
         for i in range(n):
             col = cols[i % len(cols)]
@@ -259,7 +257,8 @@ def _truthfulness_proof() -> None:
                 st.subheader(f"Deviation to {dev_value:.2f}")
                 st.metric("Allocation", str(comparison["deviated"]["allocation"]))
                 st.metric("Payment", f"{comparison['deviated']['payment']:.2f}")
-                st.metric("True utility", f"{comparison['deviated']['true_utility']:.2f}")
+                dev_util = comparison["deviated"]["true_utility"]
+                st.metric("True utility", f"{dev_util:.2f}")
 
             change = comparison["utility_change"]
             if comparison["manipulation_profitable"]:
@@ -276,7 +275,7 @@ def _truthfulness_proof() -> None:
         k = st.slider("Number of items", 1, n - 1, 2, key="truth_multi_k")
 
         st.markdown("**True valuations:**")
-        true_vals_m: Dict[int, float] = {}
+        true_vals_m: dict[int, float] = {}
         cols = st.columns(min(n, 5))
         for i in range(n):
             col = cols[i % len(cols)]
@@ -363,7 +362,7 @@ def _budget_analysis() -> None:
 
     if analysis_type == "Single auction budget":
         n = st.slider("Number of bidders", 2, 10, 5, key="budget_auction_n")
-        bids_budget: Dict[int, float] = {}
+        bids_budget: dict[int, float] = {}
         cols = st.columns(min(n, 5))
         for i in range(n):
             col = cols[i % len(cols)]
@@ -387,7 +386,7 @@ def _budget_analysis() -> None:
         cost = st.number_input(
             "Project cost", value=40.0, key="budget_pub_cost"
         )
-        vals_budget: Dict[int, float] = {}
+        vals_budget: dict[int, float] = {}
         cols = st.columns(min(n, 5))
         for i in range(n):
             col = cols[i % len(cols)]
@@ -496,7 +495,7 @@ def _analyse_impossibility(
     ir: bool,
     bb: bool,
     no_deficit: bool,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Analyse feasibility of desired property combinations."""
     results = []
 

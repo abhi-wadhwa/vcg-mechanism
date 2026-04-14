@@ -29,11 +29,8 @@ money.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
-
-from src.core.vcg import MechanismResult, VCGMechanism
 
 
 @dataclass
@@ -41,8 +38,8 @@ class FacilityResult:
     """Result of facility location mechanism."""
 
     location: float
-    agent_costs: Dict[int, float]  # distance from facility
-    payments: Dict[int, float]
+    agent_costs: dict[int, float]  # distance from facility
+    payments: dict[int, float]
     total_cost: float  # sum of distances
     is_pareto_optimal: bool
 
@@ -70,9 +67,9 @@ class FacilityLocationMechanism:
         self,
         num_agents: int,
         method: str = "median",
-        phantoms: Optional[List[float]] = None,
+        phantoms: list[float] | None = None,
         grid_resolution: float = 0.1,
-        grid_range: Optional[tuple] = None,
+        grid_range: tuple | None = None,
     ):
         self.num_agents = num_agents
         self.method = method
@@ -80,7 +77,7 @@ class FacilityLocationMechanism:
         self.grid_resolution = grid_resolution
         self.grid_range = grid_range
 
-    def run(self, reports: Dict[int, float]) -> FacilityResult:
+    def run(self, reports: dict[int, float]) -> FacilityResult:
         """Run the facility location mechanism.
 
         Parameters
@@ -100,12 +97,11 @@ class FacilityLocationMechanism:
         else:
             raise ValueError(f"Unknown method: {self.method}")
 
-    def _run_median(self, reports: Dict[int, float]) -> FacilityResult:
+    def _run_median(self, reports: dict[int, float]) -> FacilityResult:
         """Median mechanism (strategyproof, no payments)."""
         all_points = sorted(
             [reports[i] for i in range(self.num_agents)] + list(self.phantoms)
         )
-        n = len(all_points)
         # Median: middle element (lower median for even count)
         location = float(np.median(all_points))
 
@@ -121,7 +117,7 @@ class FacilityLocationMechanism:
             is_pareto_optimal=True,
         )
 
-    def _run_vcg(self, reports: Dict[int, float]) -> FacilityResult:
+    def _run_vcg(self, reports: dict[int, float]) -> FacilityResult:
         """VCG mechanism for facility location with Clarke pivot payments.
 
         Minimise total distance (negative valuation = cost).
@@ -145,15 +141,20 @@ class FacilityLocationMechanism:
         candidates.sort()
 
         # Valuation: negative distance (we MAXIMISE welfare = MINIMISE total distance)
-        def total_neg_distance(loc: float, agents: List[int]) -> float:
+        def total_neg_distance(loc: float, agents: list[int]) -> float:
             return -sum(abs(reports[j] - loc) for j in agents)
 
         # Optimal allocation with all agents
-        best_loc = min(candidates, key=lambda loc: sum(abs(reports[j] - loc) for j in range(self.num_agents)))
-        welfare_all = total_neg_distance(best_loc, list(range(self.num_agents)))
+        all_agents = list(range(self.num_agents))
+        best_loc = min(
+            candidates,
+            key=lambda loc: sum(
+                abs(reports[j] - loc) for j in all_agents
+            ),
+        )
 
         # Clarke pivot payments
-        payments: Dict[int, float] = {}
+        payments: dict[int, float] = {}
         for i in range(self.num_agents):
             others = [j for j in range(self.num_agents) if j != i]
             # Optimal for others without i
@@ -178,10 +179,10 @@ class FacilityLocationMechanism:
 
     def verify_strategyproofness(
         self,
-        true_reports: Dict[int, float],
+        true_reports: dict[int, float],
         deviation_range: tuple = (-10.0, 10.0),
         num_deviations: int = 100,
-    ) -> Dict[int, bool]:
+    ) -> dict[int, bool]:
         """Verify strategyproofness by checking deviations.
 
         For the median mechanism, no agent can reduce their cost by
@@ -192,7 +193,7 @@ class FacilityLocationMechanism:
         dict mapping agent index to bool (True = no beneficial deviation found).
         """
         truthful_result = self.run(true_reports)
-        results: Dict[int, bool] = {}
+        results: dict[int, bool] = {}
 
         deviations = np.linspace(
             deviation_range[0], deviation_range[1], num_deviations

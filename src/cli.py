@@ -11,15 +11,13 @@ Usage examples:
 from __future__ import annotations
 
 import argparse
-import sys
-from typing import Dict, List
 
 from src.core.auctions import MultiUnitAuction, VickreyAuction
 from src.core.facility import FacilityLocationMechanism
 from src.core.public_goods import PublicProjectMechanism
 
 
-def main(argv: List[str] | None = None) -> None:
+def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="VCG Mechanism Design Framework",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -53,7 +51,11 @@ def main(argv: List[str] | None = None) -> None:
     # Facility location
     p_fac = subparsers.add_parser("facility", help="Facility location mechanism")
     p_fac.add_argument(
-        "--locations", nargs="+", type=float, required=True, help="Agent ideal locations"
+        "--locations",
+        nargs="+",
+        type=float,
+        required=True,
+        help="Agent ideal locations",
     )
     p_fac.add_argument(
         "--method",
@@ -83,7 +85,7 @@ def main(argv: List[str] | None = None) -> None:
         _run_demo()
 
 
-def _run_vickrey(bids: List[float]) -> None:
+def _run_vickrey(bids: list[float]) -> None:
     n = len(bids)
     bids_dict = {i: b for i, b in enumerate(bids)}
 
@@ -111,7 +113,7 @@ def _run_vickrey(bids: List[float]) -> None:
         )
 
 
-def _run_multi_unit(bids: List[float], num_items: int) -> None:
+def _run_multi_unit(bids: list[float], num_items: int) -> None:
     n = len(bids)
     bids_dict = {i: b for i, b in enumerate(bids)}
 
@@ -139,7 +141,7 @@ def _run_multi_unit(bids: List[float], num_items: int) -> None:
         )
 
 
-def _run_public_good(valuations: List[float], cost: float) -> None:
+def _run_public_good(valuations: list[float], cost: float) -> None:
     n = len(valuations)
     vals_dict = {i: v for i, v in enumerate(valuations)}
 
@@ -172,7 +174,7 @@ def _run_public_good(valuations: List[float], cost: float) -> None:
         )
 
 
-def _run_facility(locations: List[float], method: str) -> None:
+def _run_facility(locations: list[float], method: str) -> None:
     n = len(locations)
     locs_dict = {i: loc for i, loc in enumerate(locations)}
 

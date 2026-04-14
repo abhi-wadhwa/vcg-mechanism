@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-import numpy as np
-
-from src.core.vcg import VCGMechanism, MechanismResult
+from src.core.vcg import MechanismResult, VCGMechanism
 
 
 class TestVCGMechanism:

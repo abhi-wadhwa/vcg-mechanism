@@ -14,12 +14,10 @@ Key concepts:
 from __future__ import annotations
 
 import itertools
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from dataclasses import dataclass
+from typing import Any
 
-import numpy as np
-
-from src.core.vcg import MechanismResult, VCGMechanism
+from src.core.vcg import VCGMechanism
 
 
 @dataclass
@@ -33,17 +31,17 @@ class ManipulationReport:
     best_deviation_utility: float
     is_manipulable: bool  # True if deviation improves utility
     utility_gain: float  # best_deviation_utility - truthful_utility
-    all_deviations: List[Tuple[Any, float]]  # (type, utility) pairs
+    all_deviations: list[tuple[Any, float]]  # (type, utility) pairs
 
 
 @dataclass
 class ManipulationAnalysis:
     """Complete manipulation analysis across all agents."""
 
-    agent_reports: Dict[int, ManipulationReport]
+    agent_reports: dict[int, ManipulationReport]
     is_strategyproof: bool
     is_individually_rational: bool
-    participation_utilities: Dict[int, float]  # utility from participating vs. 0
+    participation_utilities: dict[int, float]  # utility from participating vs. 0
 
     def summary(self) -> str:
         lines = ["=== Manipulation Analysis ==="]
@@ -87,15 +85,15 @@ class ManipulationDetector:
     def __init__(
         self,
         mechanism: VCGMechanism,
-        type_spaces: Dict[int, List[Any]],
+        type_spaces: dict[int, list[Any]],
     ):
         self.mechanism = mechanism
         self.type_spaces = type_spaces
 
     def analyse(
         self,
-        true_types: Dict[int, Any],
-        agents: Optional[List[int]] = None,
+        true_types: dict[int, Any],
+        agents: list[int] | None = None,
     ) -> ManipulationAnalysis:
         """Run complete manipulation analysis.
 
@@ -110,16 +108,18 @@ class ManipulationDetector:
         -------
         ManipulationAnalysis
         """
+        assert self.mechanism.valuation_fn is not None
+
         if agents is None:
             agents = list(range(self.mechanism.num_agents))
 
         # Truthful outcome
         truthful_result = self.mechanism.solve(true_types)
 
-        agent_reports: Dict[int, ManipulationReport] = {}
+        agent_reports: dict[int, ManipulationReport] = {}
         is_strategyproof = True
         is_ir = True
-        participation_utilities: Dict[int, float] = {}
+        participation_utilities: dict[int, float] = {}
 
         for i in agents:
             truthful_utility = truthful_result.utilities[i]
@@ -129,7 +129,7 @@ class ManipulationDetector:
                 is_ir = False
 
             type_space = self.type_spaces.get(i, [true_types[i]])
-            all_deviations: List[Tuple[Any, float]] = []
+            all_deviations: list[tuple[Any, float]] = []
 
             best_dev_type = true_types[i]
             best_dev_utility = truthful_utility
@@ -179,7 +179,7 @@ class ManipulationDetector:
     def brute_force_dsic_check(
         self,
         agent: int,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Brute-force DSIC check: for EVERY possible type profile of
         others, check that agent i cannot gain by deviating.
 
@@ -190,6 +190,8 @@ class ManipulationDetector:
         -------
         dict with 'is_dsic', 'violations' (list of violation details).
         """
+        assert self.mechanism.valuation_fn is not None
+
         others = [j for j in range(self.mechanism.num_agents) if j != agent]
         others_type_lists = [self.type_spaces[j] for j in others]
 
@@ -243,10 +245,10 @@ class ManipulationDetector:
 
     def compare_truthful_vs_deviation(
         self,
-        true_types: Dict[int, Any],
+        true_types: dict[int, Any],
         agent: int,
         deviation_type: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Side-by-side comparison of truthful vs. deviated outcome.
 
         Parameters
@@ -262,6 +264,8 @@ class ManipulationDetector:
         -------
         dict with both outcomes and comparison.
         """
+        assert self.mechanism.valuation_fn is not None
+
         # Truthful outcome
         truthful_result = self.mechanism.solve(true_types)
 

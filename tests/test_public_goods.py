@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import pytest
-import numpy as np
 
-from src.core.public_goods import PublicProjectMechanism
 from src.core.facility import FacilityLocationMechanism
+from src.core.public_goods import PublicProjectMechanism
 
 
 class TestPublicProjectMechanism:

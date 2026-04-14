@@ -21,10 +21,6 @@ k identical items among n bidders, each wanting at most one unit.
 from __future__ import annotations
 
 import itertools
-from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
-
-import numpy as np
 
 from src.core.vcg import MechanismResult, VCGMechanism
 
@@ -39,7 +35,7 @@ class VickreyAuction:
     def __init__(self, num_bidders: int):
         self.num_bidders = num_bidders
 
-    def run(self, bids: Dict[int, float]) -> MechanismResult:
+    def run(self, bids: dict[int, float]) -> MechanismResult:
         """Run the auction.
 
         Parameters
@@ -115,7 +111,7 @@ class MultiUnitAuction:
         self.num_bidders = num_bidders
         self.num_items = num_items
 
-    def run(self, bids: Dict[int, float]) -> MechanismResult:
+    def run(self, bids: dict[int, float]) -> MechanismResult:
         """Run the multi-unit auction.
 
         Parameters
@@ -141,8 +137,8 @@ class MultiUnitAuction:
         social_welfare = sum(bids[i] for i in winners)
 
         # VCG payments for each bidder
-        payments: Dict[int, float] = {}
-        utilities: Dict[int, float] = {}
+        payments: dict[int, float] = {}
+        utilities: dict[int, float] = {}
 
         for i in range(self.num_bidders):
             if i in winners:

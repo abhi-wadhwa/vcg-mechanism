@@ -22,11 +22,9 @@ of the Green-Laffont impossibility theorem.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-import numpy as np
-
-from src.core.vcg import MechanismResult, VCGMechanism
+from src.core.vcg import VCGMechanism
 
 
 @dataclass
@@ -34,8 +32,8 @@ class PublicGoodResult:
     """Result of public goods provision mechanism."""
 
     build: bool
-    payments: Dict[int, float]
-    utilities: Dict[int, float]
+    payments: dict[int, float]
+    utilities: dict[int, float]
     social_welfare: float
     total_payments: float
     cost: float
@@ -59,7 +57,7 @@ class PublicProjectMechanism:
         self.num_agents = num_agents
         self.cost = cost
 
-    def run(self, valuations: Dict[int, float]) -> PublicGoodResult:
+    def run(self, valuations: dict[int, float]) -> PublicGoodResult:
         """Run the public project mechanism.
 
         Parameters
@@ -79,8 +77,8 @@ class PublicProjectMechanism:
         total_value = sum(valuations.values())
         build = total_value >= self.cost
 
-        payments: Dict[int, float] = {}
-        utilities: Dict[int, float] = {}
+        payments: dict[int, float] = {}
+        utilities: dict[int, float] = {}
 
         for i in range(self.num_agents):
             others_value = total_value - valuations[i]
@@ -200,8 +198,8 @@ class PublicProjectMechanism:
         return vcg
 
     def demonstrate_budget_deficit(
-        self, valuations: Dict[int, float]
-    ) -> Dict[str, Any]:
+        self, valuations: dict[int, float]
+    ) -> dict[str, Any]:
         """Show the budget deficit inherent in VCG for public goods.
 
         Returns a summary dict with build decision, payments, deficit,
